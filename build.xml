@@ -2,7 +2,7 @@
     <!--  set global properties for this build  -->
     <property name="src" location="src/"/>
     <property name="dist" location="dist/"/>
-    <property name="main_class" value="Tone"/>
+    <property name="main_class" value="bellchoir.Tone"/>
     <target name="init">
         <mkdir dir="${dist}"/>
         <mkdir dir="${dist}/classes"/>
@@ -17,8 +17,13 @@
             </manifest>
         </jar>
     </target>
-    <target name="run" depends="jar">
-        <java jar="dist/${ant.project.name}.jar" fork="true"/>
+    <target name="songarg" unless="song">
+        <property name="song" value="MaryLamb.txt"/>
+    </target>
+    <target name="run" depends="jar,songarg">
+        <java jar="${dist}/${ant.project.name}.jar" fork="true">
+            <arg value="${song}"/>
+        </java>
     </target>
     <target name="clean">
         <delete dir="${dist}"/>
