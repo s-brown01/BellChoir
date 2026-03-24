@@ -10,8 +10,6 @@ public class ChoirMember implements Runnable {
         this.note1 = note1;
         this.note2 = note2;
         this.thread = new Thread(this, name);
-        
-        this.thread.start();
     }
     
     public Note getNote1() {
@@ -20,6 +18,14 @@ public class ChoirMember implements Runnable {
     
     public Note getNote2() {
         return note2;
+    }
+    
+    public String getName() {
+        return thread.getName();
+    }
+    
+    public void start() {
+        this.thread.start();
     }
     
     /**
