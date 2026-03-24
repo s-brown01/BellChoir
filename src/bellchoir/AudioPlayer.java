@@ -9,42 +9,57 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class Player {
+public class AudioPlayer {
     
+    /**
+     * The main method for player. To run, use `ant run` at the project level.
+     *
+     * @param args - Only accepts args of length 1. Should be the name of the file to be played, without the path. File is expected to be in res/songs/
+     */
     public static void main(String[] args) {
+        // should be exactly one argument: the song's filename
         if (args.length != 1) {
             System.err.println("Unexpected amount of arguments. Expected 1 but received " + args.length);
             System.exit(1);
         }
-        
+        // the song should always be in this directory
         final String filename = "res/songs/" + args[0];
         
         final AudioFormat af =
                 new AudioFormat(Note.SAMPLE_RATE, 8, 1, true, false);
-        Player t = new Player(af);
-        
+        AudioPlayer t = new AudioPlayer(af);
+        // try to read the song that is to be played
         List<BellNote> newSong = t.readSong(filename);
-        
+        // if the readSong(filename) returns null if the file couldn't be processed for
         if (newSong == null) {
             System.err.println("Invalid song with filename: " + filename);
+            // exit with 1 to show an invalid exit (0 is all good, 1 is expected but not good)
             System.exit(1);
         }
-        
+        // try to play the song
         try {
             t.playSong(newSong);
         } catch (LineUnavailableException e) {
-            System.err.println("An error occurred while trying to play " + filename + ":\n\t" + e);
+            // if something unexpected occurs tell the user that it was a problem on the programs end
+            System.err.println("An error occurred while trying to play " + filename);
         }
     }
 
     private final AudioFormat af;
 
-    Player(AudioFormat af) {
+    AudioPlayer(AudioFormat af) {
         this.af = af;
     }
-
+    
+    /**
+     * Play the song in the parameter
+     *
+     * @param song a List of BellNotes that are to be played by the players in the band
+     * @throws LineUnavailableException - thrown when resources are restricted
+     */
     void playSong(List<BellNote> song) throws LineUnavailableException {
         try (final SourceDataLine line = AudioSystem.getSourceDataLine(af)) {
             line.open();
@@ -56,29 +71,42 @@ public class Player {
             line.drain();
         }
     }
-
+    
+    /**
+     * Read a given file and create a List of BellNotes.
+     * This will return null if the song is not valid (FileNotFoundException or IOException Occurred, or contains a null BellNote).
+     * Notes in the file should be separated by line with a single space between the note-length pair (e.g. A5 16).
+     * The length
+     *
+     * @param filename the file to read the song from
+     * @return A List containing a valid song to play, will be null if the song is invalid
+     */
     private List<BellNote> readSong(String filename) {
         final List<BellNote> song = new ArrayList<>();
         boolean validSong = true;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
-            while ((line =reader.readLine()) != null) {
+            int line_num = 0;
+            while ((line=reader.readLine()) != null) {
                 String[] note_length = line.split(" ");
 
-                BellNote note = parseBellNote(note_length);
+                BellNote note = parseBellNote(note_length, line_num);
                 
                 if (note != null) {
                     song.add(note);
                 } else if (validSong) {
                     validSong = false;
                 }
+                line_num++;
             }
 
         } catch (FileNotFoundException e) {
             System.err.println("No song found with filename: " + filename);
+            validSong = false;
         } catch (IOException e) {
             System.err.println("An error occurred while trying to read the song with filename: " + filename);
+            validSong = false;
         }
         
         if (!validSong) {
@@ -89,12 +117,19 @@ public class Player {
         return song;
         
     }
-
-    private BellNote parseBellNote(String[] note_length) {
+    
+    /**
+     *
+     *
+     * @param note_length the note-length pair to parse a BellNote from, in format [Note, Length]
+     * @param line_number the line number associated with the specific note_length pair
+     * @return A BellNote parsed from the note_length param. Will be null if invalid
+     */
+    private BellNote parseBellNote(String[] note_length, int line_number) {
         // should always be 2 objects in the array: Note and Length
         // more or less than 2 and try the next line
         if (note_length.length != 2) {
-            System.err.println("An unexpected amount of items per line, got " + note_length.length + " but expected 2");
+            System.err.println("An unexpected amount of items per line, expecting 2 got " + note_length.length + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
             return null;
         }
         
@@ -107,7 +142,7 @@ public class Player {
             // try to get the note to play, should be in the Note enum
             tempNote = Note.valueOf(note_length[0]);
         } catch (IllegalArgumentException e) {
-            System.err.println("Invalid note: " + note_length[0]);
+            System.err.println("Invalid note: " + note_length[0] + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
             return null;
         }
         
@@ -115,7 +150,7 @@ public class Player {
             // get the length of the note to play, should be an int
             lengthNum = Integer.parseInt(note_length[1]);
         } catch (NumberFormatException e) {
-            System.err.println("Invalid note length: " + note_length[1]);
+            System.err.println("Invalid note length: " + note_length[1] + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
             return null;
         }
         
@@ -128,7 +163,7 @@ public class Player {
                 return null;
             }
         } catch (IllegalArgumentException e) {
-            System.err.println("Length " + lengthNum + " is not a valid note length");
+            System.err.println("Length " + lengthNum + " is not a valid note length" + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
             return null;
         }
         
