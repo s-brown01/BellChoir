@@ -100,15 +100,8 @@ public class Conductor implements Runnable {
     public void stop() {
         logger.info("Stopping");
         isRunning = false;
+        logger.info("Stopping the choir");
         stopChoir();
-        
-        try {
-            logger.info("Joining thread to stop");
-            thread.join();
-        } catch (InterruptedException e) {
-            logger.warning("Interrupted while stopping (stop())");
-//            System.err.println("Conductor interrupted while stopping");
-        }
     }
     
     /**
