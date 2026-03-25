@@ -24,7 +24,8 @@ public class AudioPlayer {
     public static void main(String[] args) {
         // should be exactly one argument: the song's filename
         if (args.length != 1) {
-            System.err.println("Unexpected amount of arguments. Expected 1 but received " + args.length);
+            logger.severe("Unexpected amount of arguments given. Needs 1, but received " + args.length + ". Terminating program.");
+//            System.err.println("Unexpected amount of arguments. Expected 1 but received " + args.length);
             System.exit(1);
         }
         // the song should always be in this directory
@@ -36,6 +37,8 @@ public class AudioPlayer {
         
         // try to read and play the song, easier to run 1 function from a user standpoint
         t.readAndPlaySong(filename);
+        logger.info("readAndPlaySong with filename " + filename + " finished successfully. Terminating program with code 0 (success)");
+        System.exit(0);
         
     }
     
@@ -72,7 +75,11 @@ public class AudioPlayer {
         logger.info("Creating a Conductor");
         final Conductor c = new Conductor(song, af, "Conductor");
         logger.info("Telling Conductor to start");
+        // play the song
         c.startPlaying();
+        logger.info("Waiting for the Conductor to finish");
+        c.waitUntilFinished();
+        logger.info("Song has finished playing");
     }
     
     /**
