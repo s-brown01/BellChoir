@@ -5,10 +5,12 @@ public class ChoirMember implements Runnable {
     private final Note note1;
     private final Note note2;
     private final Thread thread;
+    private volatile boolean isPlaying;
     
     public ChoirMember(Note note1, Note note2, String name) {
         this.note1 = note1;
         this.note2 = note2;
+        this.isPlaying = false;
         this.thread = new Thread(this, name);
     }
     
@@ -25,6 +27,7 @@ public class ChoirMember implements Runnable {
     }
     
     public void start() {
+        this.isPlaying = true;
         this.thread.start();
     }
     
@@ -33,6 +36,16 @@ public class ChoirMember implements Runnable {
      */
     @Override
     public void run() {
-        System.out.println("Starting thread " + thread.getName());
+        if (isPlaying) {
+            System.out.println(thread.getName() + " started");
+        }
+    }
+    
+    public void stop() {
+        this.isPlaying = false;
+        synchronized (this) {
+            notify();
+        }
+        System.out.println(thread.getName() + " stopped");
     }
 }
