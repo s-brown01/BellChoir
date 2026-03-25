@@ -14,6 +14,8 @@ import java.util.List;
 
 public class AudioPlayer {
     
+    private static final String SONG_DIRECTORY = "res/songs/";
+    
     /**
      * The main method for player. To run, use `ant run` at the project level.
      *
@@ -26,7 +28,7 @@ public class AudioPlayer {
             System.exit(1);
         }
         // the song should always be in this directory
-        final String filename = "res/songs/" + args[0];
+        final String filename = SONG_DIRECTORY + args[0];
         
         final AudioFormat af =
                 new AudioFormat(Note.SAMPLE_RATE, 8, 1, true, false);
