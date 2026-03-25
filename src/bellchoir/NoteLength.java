@@ -8,13 +8,20 @@ public enum NoteLength {
     SIXTEENTH(16),
     THIRTY_SECOND(32);
     
+    public static NoteLength fromDivision(int division) {
+        for (NoteLength nl : values()) {
+            if (nl.division == division) {
+                return nl;
+            }
+        }
+        return null;
+    }
     private final int division;
-    
     private final int timeMs;
     
     NoteLength(int division) {
         this.division = division;
-        timeMs = (int) (Note.MEASURE_LENGTH_SEC * 1000) / division;
+        timeMs = (Note.MEASURE_LENGTH_SEC * 1000) / division;
     }
     
     public int timeMs() {
@@ -23,14 +30,5 @@ public enum NoteLength {
     
     public int division() {
         return division;
-    }
-    
-    public static NoteLength fromDivision(int division) {
-        for (NoteLength nl : values()) {
-            if (nl.division == division) {
-                return nl;
-            }
-        }
-        return null;
     }
 }
