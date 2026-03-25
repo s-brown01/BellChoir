@@ -4,6 +4,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import java.security.cert.TrustAnchor;
 import java.util.*;
 
 public class Conductor implements Runnable {
@@ -11,17 +12,22 @@ public class Conductor implements Runnable {
     public static void main(String[] args) {
         List<BellNote> testSong = new ArrayList<>();
         testSong.add(new BellNote(Note.A4, NoteLength.QUARTER));
-        testSong.add(new BellNote(Note.C4, NoteLength.SIXTEENTH));
-        testSong.add(new BellNote(Note.REST, NoteLength.QUARTER));
-        testSong.add(new BellNote(Note.E4, NoteLength.THIRTY_SECOND));
-        testSong.add(new BellNote(Note.A4, NoteLength.EIGHTH));
-        testSong.add(new BellNote(Note.REST, NoteLength.QUARTER));
-        testSong.add(new BellNote(Note.E4, NoteLength.HALF));
-        testSong.add(new BellNote(Note.A4, NoteLength.QUARTER));
-        testSong.add(new BellNote(Note.REST, NoteLength.WHOLE));
-        testSong.add(new BellNote(Note.E4, NoteLength.EIGHTH));
-        testSong.add(new BellNote(Note.A4, NoteLength.WHOLE));
+        testSong.add(new BellNote(Note.A4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.B4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.C4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.C4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.D4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.D4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.E4, NoteLength.QUARTER));
         testSong.add(new BellNote(Note.REST, NoteLength.HALF));
+        testSong.add(new BellNote(Note.E4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.D4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.D4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.C4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.C4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.B4, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.A4S, NoteLength.QUARTER));
+        testSong.add(new BellNote(Note.A4, NoteLength.WHOLE));
         
         AudioFormat af = new AudioFormat(Note.SAMPLE_RATE, 8, 1, true, false);
         
@@ -98,8 +104,7 @@ public class Conductor implements Runnable {
     @Override
     public void run() {
         System.out.println("Conductor starting");
-        startChoir();
-        // give the same SourceDataLine to all choir members
+        
         // create the choir once told to run
         // it is a bit of a small delay till the song is played when thread is started, but worth it
         try (final SourceDataLine line = AudioSystem.getSourceDataLine(af)) {
@@ -108,27 +113,30 @@ public class Conductor implements Runnable {
             line.start();
             
             // create the choir
+            // give the same SourceDataLine to all choir members
             createChoir(line);
+            
+            // start the choir
+            startChoir();
             
             // play the song
             for (BellNote bn : song) {
+                // for each not in the song get the Member that should be playing
                 ChoirMember cm = choir.get(bn.note);
-                System.out.println("BN Note: " + bn.note.toString() + " played by member: " + cm.getName());
-                try {
-                    Thread.sleep(bn.length.timeMs());
-                } catch (InterruptedException e) {
-                    System.err.println("Conductor interrupted while sleeping");
+                // if the member is null, the Choir wasn't created correctly
+                if (cm == null) {
+                    System.err.println("An error occurred while trying to play the song, terminating program");
                     System.exit(1);
                 }
-                
-//                ChoirMember cm = choir.get(bn.note);
-//                if (cm != null) {
-//                    System.out.println("Conductor cueing " + cm.getName() + " for " + bn.note);
-//                    cm.play(bn);
+                // tell the member to play for a certain amount of time
+                cm.playNoteAndWait(bn.length);
+//                try{
+//                    Thread.sleep(bn.length.timeMs());
+//                } catch (InterruptedException e) {
+//                    System.err.println("Conductor interrupted while trying to play the song, terminating program");
+//                    System.exit(1);
 //                }
-//
-//                // wait for note duration
-//                Thread.sleep(bn.length.timeMs());
+                
             }
             
             // finished song so shut down
@@ -136,20 +144,25 @@ public class Conductor implements Runnable {
             line.drain();
             
         } catch (LineUnavailableException e) {
+            // something happened while getting SourceDataLine from the AudioFormat
+            // this is very bad so program should shut down
             System.err.println("An error occurred while trying to play the song, terminating program");
             System.exit(1);
         }
         
-
+        // TEMPORARY sanity check
         System.out.println("Conductor ending");
-//        stopChoir();
     }
     
     public void startChoir() {
+        // TEMPORARY sanity check
         System.out.println("Conductor starting choir");
-        final Set<ChoirMember> allMembers = new HashSet<>(choir.values());
         
-        for (ChoirMember cm : allMembers) {
+        // tell every choir member to start
+        for (Note note : choir.keySet()) {
+            // since keys are guaranteed to be unique AND each Choir Member only plays one note this tells each CM to start only 1 time
+            final ChoirMember cm = choir.get(note);
+            // TEMPORARY sanity check
             System.out.println("Conductor telling " + cm.getName() + " to start");
             cm.start();
         }

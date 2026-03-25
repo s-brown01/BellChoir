@@ -45,7 +45,7 @@ public class AudioPlayer {
         this.af = af;
     }
     
-    public void readAndPlaySong(String filename) {
+    private void readAndPlaySong(String filename) {
         // try to read the song that is to be played
         List<BellNote> newSong = this.readSong(filename);
         // if the readSong(filename) returns null if the file couldn't be processed for
