@@ -97,6 +97,21 @@ public class Conductor implements Runnable {
         thread.start();
     }
     
+    public void waitUntilFinished() {
+        // make sure that the thread that calls this isn't the running thread of this
+        // otherwise it would wait for itself to finish, thus never finishing
+        if (Thread.currentThread() != this.thread) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                logger.warning(Thread.currentThread().getName() + " was interrupted while joining " + this.thread.getName());
+//                throw new RuntimeException(e);
+            }
+        } else {
+            logger.warning("waitUntilFinished() called from the Conductor thread itself; returning immediately.");
+        }
+    }
+    
     public void stop() {
         logger.info("Stopping");
         isRunning = false;
