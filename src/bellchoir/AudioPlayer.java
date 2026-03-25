@@ -1,7 +1,6 @@
 package bellchoir;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import java.io.BufferedReader;
@@ -19,7 +18,8 @@ public class AudioPlayer {
     /**
      * The main method for player. To run, use `ant run` at the project level.
      *
-     * @param args - Only accepts args of length 1. Should be the name of the file to be played, without the path. File is expected to be in res/songs/
+     * @param args - Only accepts args of length 1. Should be the name of the file to be played, without the path. File
+     *             is expected to be in res/songs/
      */
     public static void main(String[] args) {
         // should be exactly one argument: the song's filename
@@ -33,8 +33,21 @@ public class AudioPlayer {
         final AudioFormat af =
                 new AudioFormat(Note.SAMPLE_RATE, 8, 1, true, false);
         AudioPlayer t = new AudioPlayer(af);
+        
+        // try to read and play the song, easier to run 1 function from a user standpoint
+        t.readAndPlaySong(filename);
+        
+    }
+    
+    private final AudioFormat af;
+    
+    AudioPlayer(AudioFormat af) {
+        this.af = af;
+    }
+    
+    public void readAndPlaySong(String filename) {
         // try to read the song that is to be played
-        List<BellNote> newSong = t.readSong(filename);
+        List<BellNote> newSong = this.readSong(filename);
         // if the readSong(filename) returns null if the file couldn't be processed for
         if (newSong == null) {
             System.err.println("Invalid song with filename: " + filename);
@@ -43,17 +56,12 @@ public class AudioPlayer {
         }
         // try to play the song
         try {
-            t.playSong(newSong);
+            this.playSong(newSong);
         } catch (LineUnavailableException e) {
             // if something unexpected occurs tell the user that it was a problem on the programs end
             System.err.println("An error occurred while trying to play " + filename);
+            System.exit(1);
         }
-    }
-
-    private final AudioFormat af;
-
-    AudioPlayer(AudioFormat af) {
-        this.af = af;
     }
     
     /**
@@ -63,22 +71,14 @@ public class AudioPlayer {
      * @throws LineUnavailableException - thrown when resources are restricted
      */
     void playSong(List<BellNote> song) throws LineUnavailableException {
-        try (final SourceDataLine line = AudioSystem.getSourceDataLine(af)) {
-            line.open();
-            line.start();
-
-            for (BellNote bn : song) {
-                playNote(line, bn);
-            }
-            line.drain();
-        }
+        final Conductor c = new Conductor(song, af, "Conductor");
+        c.start();
     }
     
     /**
-     * Read a given file and create a List of BellNotes.
-     * This will return null if the song is not valid (FileNotFoundException or IOException Occurred, or contains a null BellNote).
-     * Notes in the file should be separated by line with a single space between the note-length pair (e.g. A5 16).
-     * The length
+     * Read a given file and create a List of BellNotes. This will return null if the song is not valid
+     * (FileNotFoundException or IOException Occurred, or contains a null BellNote). Notes in the file should be
+     * separated by line with a single space between the note-length pair (e.g. A5 16). The length
      *
      * @param filename the file to read the song from
      * @return A List containing a valid song to play, will be null if the song is invalid
@@ -86,13 +86,13 @@ public class AudioPlayer {
     private List<BellNote> readSong(String filename) {
         final List<BellNote> song = new ArrayList<>();
         boolean validSong = true;
-
+        
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
             int line_num = 0;
-            while ((line=reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 String[] note_length = line.split(" ");
-
+                
                 BellNote note = parseBellNote(note_length, line_num);
                 
                 if (note != null) {
@@ -102,7 +102,7 @@ public class AudioPlayer {
                 }
                 line_num++;
             }
-
+            
         } catch (FileNotFoundException e) {
             System.err.println("No song found with filename: " + filename);
             validSong = false;
@@ -112,16 +112,14 @@ public class AudioPlayer {
         }
         
         if (!validSong) {
-            System.err.println(filename + " is not a valid song");
+            System.err.println(filename + " has bad lines and cannot be played ");
             return null;
         }
-
+        
         return song;
     }
     
     /**
-     *
-     *
      * @param note_length the note-length pair to parse a BellNote from, in format [Note, Length]
      * @param line_number the line number associated with the specific note_length pair
      * @return A BellNote parsed from the note_length param. Will be null if invalid
@@ -166,7 +164,7 @@ public class AudioPlayer {
             return null;
         }
         
-        try{
+        try {
             // using the new int, get the intended note's play length
             // if the NoteLength is not valid, fromDivision returns null, so this will return null if bad
             return NoteLength.fromDivision(lengthNum);
@@ -175,7 +173,7 @@ public class AudioPlayer {
             return null;
         }
     }
-
+    
     private void playNote(SourceDataLine line, BellNote bn) {
         final int ms = Math.min(bn.length.timeMs(), Note.MEASURE_LENGTH_SEC * 1000);
         final int length = Note.SAMPLE_RATE * ms / 1000;
