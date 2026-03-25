@@ -117,7 +117,6 @@ public class AudioPlayer {
         }
 
         return song;
-        
     }
     
     /**
@@ -135,19 +134,30 @@ public class AudioPlayer {
             return null;
         }
         
-        Note tempNote;
-        int lengthNum;
-        NoteLength tempLength;
-
-        // try to get a BellNote out of the given string array
-        try {
-            // try to get the note to play, should be in the Note enum
-            tempNote = Note.valueOf(note_length[0]);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Invalid note: " + note_length[0] + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
+        final Note tempNote = parseNote(note_length, line_number);
+        final NoteLength tempLength = parseNoteLength(note_length, line_number);
+        
+        if (tempNote == null || tempLength == null) {
             return null;
         }
         
+        return new BellNote(tempNote, tempLength);
+    }
+    
+    private Note parseNote(String[] note_length, int line_number) {
+        final String note = note_length[0];
+        // try to get a BellNote out of the given string
+        try {
+            // try to get the note to play, should be in the Note enum
+            return Note.valueOf(note);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid note: " + note + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
+            return null;
+        }
+    }
+    
+    private NoteLength parseNoteLength(String[] note_length, int line_number) {
+        final int lengthNum;
         try {
             // get the length of the note to play, should be an int
             lengthNum = Integer.parseInt(note_length[1]);
@@ -158,18 +168,12 @@ public class AudioPlayer {
         
         try{
             // using the new int, get the intended note's play length
-            tempLength = NoteLength.fromDivision(lengthNum);
-            
-            // if the NoteLength is not valid, fromDivision returns null, so make sure it is not null
-            if (tempLength == null) {
-                return null;
-            }
+            // if the NoteLength is not valid, fromDivision returns null, so this will return null if bad
+            return NoteLength.fromDivision(lengthNum);
         } catch (IllegalArgumentException e) {
             System.err.println("Length " + lengthNum + " is not a valid note length" + " \n\tLine " + line_number + ": " + Arrays.toString(note_length));
             return null;
         }
-        
-        return new BellNote(tempNote, tempLength);
     }
 
     private void playNote(SourceDataLine line, BellNote bn) {
