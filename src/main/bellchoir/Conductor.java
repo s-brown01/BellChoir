@@ -5,8 +5,11 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Conductor implements Runnable {
+    
+    private static final Logger logger = BellChoirLogger.createLogger(Conductor.class.getName());
     
     public static void main(String[] args) {
         List<BellNote> testSong = new ArrayList<>();
@@ -32,7 +35,7 @@ public class Conductor implements Runnable {
         
         Conductor conductor = new Conductor(testSong, af, "TestConductor");
         
-        conductor.start();
+        conductor.startPlaying();
         
         try {
             conductor.thread.join(); // wait for song to finish
@@ -49,6 +52,10 @@ public class Conductor implements Runnable {
     private final AudioFormat af;
     private volatile boolean isRunning = true;
     
+    public Conductor(List<BellNote> song, AudioFormat af) {
+        this(song, af, "Conductor");
+    }
+    
     /**
      * Creates a Conductor with the specified ConductorName. If no ConductorName is provided, the default is
      * "Conductor"
@@ -64,36 +71,43 @@ public class Conductor implements Runnable {
     }
     
     private void createChoir(SourceDataLine line) {
-        final List<Note> allNotes = new LinkedList<>();
-        // set all the unique notes that will be played in the song
+        logger.info("Attempting to create a choir");
+        final List<Note> allUniqueNotes = new LinkedList<>();
+        // set of all the unique notes that will be played in the song
         for (BellNote bn : song) {
-            if (!allNotes.contains(bn.note)) {
-                allNotes.add(bn.note);
+            if (!allUniqueNotes.contains(bn.note)) {
+                allUniqueNotes.add(bn.note);
             }
         }
         // for each unique note, make a ChoirMember who will play it
         int i = 0;
-        for (Note note : allNotes) {
+        for (Note note : allUniqueNotes) {
             // i starts at 0 before loop, so incrementing here means the member numbering starts at 1
             i++;
-            final ChoirMember newMember = new ChoirMember(note, line, "Member #" + (i));
+            logger.info("Creating a new Choir Member for " + note + ", Member # " + i);
+            final ChoirMember newMember = new ChoirMember(note, line, "Member #" + i);
             choir.put(note, newMember);
         }
+        logger.info("Choir created with " + choir.size() + " members for a song with " + allUniqueNotes.size() + " unique notes");
     }
     
-    public void start() {
+    public void startPlaying() {
+        logger.info("Starting to play song, setting isRunning to true and starting thread");
         isRunning = true;
         thread.start();
     }
     
     public void stop() {
+        logger.info("Stopping");
         isRunning = false;
         stopChoir();
         
         try {
+            logger.info("Joining thread to stop");
             thread.join();
         } catch (InterruptedException e) {
-            System.err.println("Conductor interrupted while stopping");
+            logger.warning("Interrupted while stopping (stop())");
+//            System.err.println("Conductor interrupted while stopping");
         }
     }
     
@@ -102,7 +116,8 @@ public class Conductor implements Runnable {
      */
     @Override
     public void run() {
-        System.out.println("Conductor starting");
+        logger.info("Starting thread");
+//        System.out.println("Conductor starting");
         
         // create the choir once told to run
         // it is a bit of a small delay till the song is played when thread is started, but worth it
@@ -124,17 +139,14 @@ public class Conductor implements Runnable {
                 ChoirMember cm = choir.get(bn.note);
                 // if the member is null, the Choir wasn't created correctly
                 if (cm == null) {
-                    System.err.println("An error occurred while trying to play the song, terminating program");
+                    logger.severe("An error occurred while trying to play the song: found a null member. Terminating program.");
+//                    System.err.println("An error occurred while trying to play the song, terminating program");
                     System.exit(1);
                 }
+                
                 // tell the member to play for a certain amount of time
+                // this waits for the cm to say they are finished before moving on
                 cm.playNoteAndWait(bn.length);
-//                try{
-//                    Thread.sleep(bn.length.timeMs());
-//                } catch (InterruptedException e) {
-//                    System.err.println("Conductor interrupted while trying to play the song, terminating program");
-//                    System.exit(1);
-//                }
                 
             }
             
@@ -145,34 +157,31 @@ public class Conductor implements Runnable {
         } catch (LineUnavailableException e) {
             // something happened while getting SourceDataLine from the AudioFormat
             // this is very bad so program should shut down
-            System.err.println("An error occurred while trying to play the song, terminating program");
+            logger.severe("An error occurred while trying to play the song: resource was restricted. Terminating program.");
+//            System.err.println("An error occurred while trying to play the song, terminating program");
             System.exit(1);
         }
         
-        // TEMPORARY sanity check
-        System.out.println("Conductor ending");
+        logger.info("Done playing song, stopping now");
+        this.stop();
     }
     
     public void startChoir() {
-        // TEMPORARY sanity check
-        System.out.println("Conductor starting choir");
-        
+        logger.info("Starting choir");
+
         // tell every choir member to start
         for (Note note : choir.keySet()) {
             // since keys are guaranteed to be unique AND each Choir Member only plays one note this tells each CM to start only 1 time
-            final ChoirMember cm = choir.get(note);
-            // TEMPORARY sanity check
-            System.out.println("Conductor telling " + cm.getName() + " to start");
-            cm.start();
+            choir.get(note).start();
         }
     }
     
     public void stopChoir() {
-        System.out.println("Conductor stopping choir");
+        logger.info("Stopping choir");
+//        System.out.println("Conductor stopping choir");
         final Set<ChoirMember> allMembers = new HashSet<>(choir.values());
         
         for (ChoirMember cm : allMembers) {
-            System.out.println("Conductor telling " + cm.getName() + " to stop");
             cm.stop();
         }
     }

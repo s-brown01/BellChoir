@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 public class ChoirMember implements Runnable {
     
     private static final Logger logger = BellChoirLogger.createLogger(ChoirMember.class.getName());
-    
+
     private final Note note;
     private final Thread thread;
     private final SourceDataLine audio;
