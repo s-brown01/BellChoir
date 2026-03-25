@@ -48,25 +48,29 @@ public class ChoirMember implements Runnable {
      */
     @Override
     public void run() {
-        if (isRunning) {
-            System.out.println(thread.getName() + " started");
-        }
+//        if (isRunning) {
+        logger.info(getName() + " started");
+        System.out.println(thread.getName() + " started");
+//        }
         while (isRunning) {
             synchronized (this) {
                 while (!myTurn && isRunning) {
                     try {
                         wait();
                     } catch (InterruptedException e) {
+                        logger.warning(getName() + " was interrupted while running (run())");
                         System.err.println(thread.getName() + " was interrupted while running");
                     }
                 }
                 // after this point, myTurn = true
                 // double check that we are still supposed to be playing,
                 if (isRunning) {
+                    logger.info(getName() + " attempting to play sound (run())");
                     makeSound();
                 }
                 
                 // done making sound so give up the current turn for the next person
+                logger.info(getName() + " passing turn to next member (run())");
                 myTurn = false;
                 next_length = null;
             }
@@ -75,15 +79,16 @@ public class ChoirMember implements Runnable {
     
     private void makeSound() {
         if (next_length == null) {
-            System.err.println(getName() + " tried to play a Note for null length");
+            logger.warning(getName() + " tried to play a Note for null length (makeSound())");
+//            System.err.println(getName() + " tried to play a Note for null length");
             return;
         }
-        System.out.println("Playing Note: " + note + " for " + next_length.name());
-
+//        System.out.println("Playing Note: " + note + " for " + next_length.name());
         final int length_time = Note.SAMPLE_RATE * next_length.timeMs() / 1000;
         
         // prevent multiple threads from writing to audio at the same time
         synchronized (audio) {
+            logger.info(getName() + " playing Note: " + note + " for " + next_length.name());
             audio.write(note.sample(), 0, length_time);
             audio.write(Note.REST.sample(), 0, 50);
         }
@@ -99,7 +104,8 @@ public class ChoirMember implements Runnable {
         synchronized (this) {
             notify();
         }
-        System.out.println(thread.getName() + " stopped");
+        logger.info(getName() + " stopped");
+//        System.out.println(thread.getName() + " stopped");
     }
     
     public synchronized void playNoteAndWait(NoteLength length) {
@@ -113,8 +119,9 @@ public class ChoirMember implements Runnable {
             try {
                 wait();
             } catch (InterruptedException e) {
-                System.err.println(thread.getName() + " was interrupted trying to play the next note");
-                System.exit(1);
+                logger.warning(getName() + " was interrupted while waiting to play next note (playNoteAndWait())");
+//                System.err.println(thread.getName() + " was interrupted trying to play the next note");
+//                System.exit(1);
             }
         }
         
