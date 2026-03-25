@@ -48,4 +48,9 @@ public class ChoirMember implements Runnable {
         }
         System.out.println(thread.getName() + " stopped");
     }
+    
+    private void playNote(){
+        // play a note?
+    }
+    
 }
