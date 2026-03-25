@@ -1,11 +1,11 @@
-package bellchoir;
+package main.bellchoir;
 
 import javax.sound.sampled.SourceDataLine;
 import java.util.logging.Logger;
 
 public class ChoirMember implements Runnable {
     
-    private static final Logger logger = Logger.getLogger(ChoirMember.class.getName());
+    private static final Logger logger = BellChoirLogger.createLogger(ChoirMember.class.getName());
     
     private final Note note;
     private final Thread thread;

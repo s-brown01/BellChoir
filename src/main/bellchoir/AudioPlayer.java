@@ -1,4 +1,4 @@
-package bellchoir;
+package main.bellchoir;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;

@@ -1,10 +1,9 @@
-package bellchoir;
+package main.bellchoir;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import java.security.cert.TrustAnchor;
 import java.util.*;
 
 public class Conductor implements Runnable {

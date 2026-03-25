@@ -1,4 +1,4 @@
-package bellchoir;
+package main.bellchoir;
 
 public enum NoteLength {
     WHOLE(1),

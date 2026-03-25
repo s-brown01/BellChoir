@@ -1,4 +1,4 @@
-package bellchoir;
+package main.bellchoir;
 
 public class BellNote {
     final Note note;

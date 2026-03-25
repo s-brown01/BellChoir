@@ -2,7 +2,7 @@
     <!--  set global properties for this build  -->
     <property name="src" location="src/"/>
     <property name="dist" location="dist/"/>
-    <property name="main_class" value="bellchoir.AudioPlayer"/>
+    <property name="main_class" value="main.bellchoir.AudioPlayer"/>
     <target name="init">
         <mkdir dir="${dist}"/>
         <mkdir dir="${dist}/classes"/>

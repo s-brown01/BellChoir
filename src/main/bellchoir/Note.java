@@ -1,4 +1,4 @@
-package bellchoir;
+package main.bellchoir;
 
 public enum Note {
     // REST Must be the first 'Note'
