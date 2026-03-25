@@ -18,17 +18,18 @@ public class BellChoirLogger {
         consoleHandler.setFormatter(new SimpleFormatter());
         logger.addHandler(consoleHandler);
         
-        // File handler for logs/log.txt
+        // this goes specifically to the logs directory
         try {
-            // this goes specifically to the logs directory
-            FileHandler fileHandler = new FileHandler("logs/log.txt", true);
+            // logs/log-yyyy-MM-dd.log
+            String date = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            FileHandler fileHandler = new FileHandler("logs/log-" + date + ".log", true);
             fileHandler.setFormatter(new SimpleFormatter());
             // everything goes to the file
             // assuming if the user voluntarily looks at the logs file they want to see all logs
             fileHandler.setLevel(Level.ALL);
             logger.addHandler(fileHandler);
         } catch (IOException e) {
-            System.err.println("Logger could not open file, terminating program");
+            System.err.println("An error occurred while trying to create a Logger for " + name);
             System.exit(1);
         }
         
