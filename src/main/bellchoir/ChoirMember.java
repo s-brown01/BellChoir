@@ -50,7 +50,7 @@ public class ChoirMember implements Runnable {
     public void run() {
 //        if (isRunning) {
         logger.info(getName() + " started");
-        System.out.println(thread.getName() + " started");
+//        System.out.println(thread.getName() + " started");
 //        }
         while (isRunning) {
             synchronized (this) {
