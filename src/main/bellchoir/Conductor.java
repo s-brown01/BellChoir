@@ -7,10 +7,28 @@ import javax.sound.sampled.SourceDataLine;
 import java.util.*;
 import java.util.logging.Logger;
 
+/**
+ * Represents the conductor of a bell choir, responsible for coordinating the playback of a song.
+ * <p></p>
+ * The conductor takes an ordered {@link List} of {@link BellNote} objects and uses an {@link AudioFormat} to produce
+ * sound. Each unique note in the song is assigned to a {@link ChoirMember}, which is responsible for playing that
+ * note.
+ * <p></p>
+ * This class runs on its own thread and manages the timing and sequencing of notes, ensuring that each note is played
+ * in the correct order by signaling the appropriate choir member.
+ */
 public class Conductor implements Runnable {
     
+    /**
+     * A {@link Logger} created using {@link BellChoirLogger}, configured specifically for the Bell Choir project
+     */
     private static final Logger logger = BellChoirLogger.createLogger(Conductor.class.getName());
     
+    /**
+     * A basic functionality test for the Conductor
+     *
+     * @param args <b>UNUSED</b>
+     */
     public static void main(String[] args) {
         List<BellNote> testSong = new ArrayList<>();
         testSong.add(new BellNote(Note.A4, NoteLength.QUARTER));
@@ -46,30 +64,65 @@ public class Conductor implements Runnable {
         System.out.println("Test finished");
     }
     
+    /**
+     * A {@link List} of {@link BellNote} that represent the song to play, in correct order of the song
+     */
     private final List<BellNote> song;
+    /**
+     * A {@link Map} of {@link Note} to {@link ChoirMember} representing the ChoirMembers required to play the song
+     */
     private final Map<Note, ChoirMember> choir;
+    /**
+     * The {@link Thread} responsible for running this Conductor's playback logic
+     */
     private final Thread thread;
+    /**
+     * The {@link AudioFormat} that this program will use to play audio on
+     */
     private final AudioFormat af;
-    private volatile boolean isRunning = true;
     
+    /**
+     * Constructor for a Conductor. The created Conductor will be named Conductor. Will not play a song until
+     * {@link #startPlaying()} is used.
+     *
+     * @param song The {@link List} of {@link BellNote} that represent the desired song to be played
+     * @param af   The {@link AudioFormat} for this Conductor to play audio on
+     */
     public Conductor(List<BellNote> song, AudioFormat af) {
         this(song, af, "Conductor");
     }
     
     /**
-     * Creates a Conductor with the specified ConductorName. If no ConductorName is provided, the default is
-     * "Conductor"
+     * Constructor for a Conductor. The created Conductor will be named Conductor. Will not play a song until
+     * {@link #startPlaying()} is used.
      *
-     * @param ConductorName the name for this Conductor
+     * @param song          The {@link List} of {@link BellNote} that represent the desired song to be played
+     * @param af            The {@link AudioFormat} for this Conductor to play audio on
+     * @param ConductorName The name of the Conductor. If name is empty or null, the name defaults to "Conductor"
      */
     public Conductor(List<BellNote> song, AudioFormat af, String ConductorName) {
         this.song = song;
         this.af = af;
         this.choir = new HashMap<>();
+        // if the name is null, fix it
+        // if the name is empty or full of spaces, fix it
+        // Conductor will always have a name
+        if (ConductorName == null || ConductorName.isBlank()) {
+            ConductorName = "Conductor";
+        }
         this.thread = new Thread(this, ConductorName);
-        
     }
     
+    /**
+     * This creates the metaphorical choir.
+     * <p></p>
+     * Identifies all unique {@link Note} values present in the given {@link #song} and creates a {@link ChoirMember}
+     * for each Note in the song. Each ChoirMember is responsible for only 1 Note.
+     * <p></p>
+     * All created ChoirMembers share the same {@link SourceDataLine}, so all audio output is written to the same line
+     *
+     * @param line The {@link SourceDataLine} that all ChoirMembers will use to output audio
+     */
     private void createChoir(SourceDataLine line) {
         logger.info("Attempting to create a choir");
         final List<Note> allUniqueNotes = new LinkedList<>();
@@ -91,12 +144,22 @@ public class Conductor implements Runnable {
         logger.info("Choir created with " + choir.size() + " members for a song with " + allUniqueNotes.size() + " unique notes");
     }
     
+    /**
+     * Tells the Conductor to start its thread and start running.
+     * <p></p>
+     * This method is non-blocking and will immediately return after starting the Conductor's internal thread. To wait
+     * for the playback to finish, use {@link #waitUntilFinished()}
+     */
     public void startPlaying() {
         logger.info("Starting to play song, setting isRunning to true and starting thread");
-        isRunning = true;
         thread.start();
     }
     
+    /**
+     * Blocks the calling thread until the Conductor has finished playing the song.
+     * <p></p>
+     * If this method is called from the Conductor's own thread, it will not block to avoid deadlock.
+     */
     public void waitUntilFinished() {
         // make sure that the thread that calls this isn't the running thread of this
         // otherwise it would wait for itself to finish, thus never finishing
@@ -105,27 +168,37 @@ public class Conductor implements Runnable {
                 thread.join();
             } catch (InterruptedException e) {
                 logger.warning(Thread.currentThread().getName() + " was interrupted while joining " + this.thread.getName());
-//                throw new RuntimeException(e);
             }
         } else {
             logger.warning("waitUntilFinished() called from the Conductor thread itself; returning immediately.");
         }
     }
     
+    /**
+     * Stops the playback of the song.
+     * <p></p>
+     * Signals the conductor to stop running and instructs all {@link ChoirMember} in the {@link #choir} to stop. Does
+     * not block or wait for the thread to terminate.
+     */
     public void stop() {
         logger.info("Stopping");
-        isRunning = false;
         logger.info("Stopping the choir");
         stopChoir();
     }
     
     /**
-     * Runs this operation.
+     * Executes the playback logic for the song.
+     * <p></p>
+     * This method initializes the audio line, creates and starts the choir, and iterates through the {@link #song},
+     * signaling the appropriate {@link ChoirMember} to play each note in sequence. It is blocked each time it signals a
+     * ChoirMember until they are done playing.
+     * <p></p>
+     * After all notes are played, the choir is stopped and the audio line is drained. If a critical error occurs, the
+     * program will terminate.
      */
     @Override
     public void run() {
         logger.info("Starting thread");
-//        System.out.println("Conductor starting");
         
         // create the choir once told to run
         // it is a bit of a small delay till the song is played when thread is started, but worth it
@@ -174,9 +247,14 @@ public class Conductor implements Runnable {
         this.stop();
     }
     
+    /**
+     * Starts all {@link ChoirMember} threads in the choir.
+     * <p></p>
+     * Each ChoirMember will begin running and wait until it is signaled to play its assigned note.
+     */
     public void startChoir() {
         logger.info("Starting choir");
-
+        
         // tell every choir member to start
         for (Note note : choir.keySet()) {
             // since keys are guaranteed to be unique AND each Choir Member only plays one note this tells each CM to start only 1 time
@@ -184,9 +262,13 @@ public class Conductor implements Runnable {
         }
     }
     
+    /**
+     * Stops all {@link ChoirMember} threads in the choir.
+     * <p></p>
+     * Each ChoirMember is signaled to stop running and terminate its thread.
+     */
     public void stopChoir() {
         logger.info("Stopping choir");
-//        System.out.println("Conductor stopping choir");
         final Set<ChoirMember> allMembers = new HashSet<>(choir.values());
         
         for (ChoirMember cm : allMembers) {
