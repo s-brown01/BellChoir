@@ -16,6 +16,7 @@ public enum NoteLength {
         }
         return null;
     }
+    
     private final int division;
     private final int timeMs;
     
