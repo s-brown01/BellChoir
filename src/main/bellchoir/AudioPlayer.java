@@ -14,7 +14,8 @@ import java.util.logging.Logger;
 /**
  * Entry point for the Bell Choir application.
  * <p></p>
- * This class is responsible for reading a song file, parsing it into a {@link List} of {@link BellNote}, and delegating playback to a {@link Conductor}.
+ * This class is responsible for reading a song file, parsing it into a {@link List} of {@link BellNote}, and delegating
+ * playback to a {@link Conductor}.
  * <p></p>
  * It validates input, handles file I/O, and ensures that the song is played to completion before terminating.
  * <p></p>
@@ -33,7 +34,7 @@ public class AudioPlayer {
     /**
      * The main method for the AudioPlayer
      *
-     @param args Command-line arguments. Accepts exactly one argument: the filename of the song located in res/songs/
+     * @param args Command-line arguments. Accepts exactly one argument: the filename of the song located in res/songs/
      */
     public static void main(String[] args) {
         // should be exactly one argument: the song's filename
@@ -74,7 +75,8 @@ public class AudioPlayer {
     /**
      * Reads a song from a file and plays it.
      * <p></p>
-     * This method attempts to parse the file into a {@link List} of {@link BellNote}. If the file is invalid or cannot be read, the program will terminate with status code 1.
+     * This method attempts to parse the file into a {@link List} of {@link BellNote}. If the file is invalid or cannot
+     * be read, the program will terminate with status code 1.
      *
      * @param filename The path to the file containing the song
      */
