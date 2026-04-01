@@ -58,7 +58,7 @@ public class Conductor implements Runnable {
         try {
             conductor.thread.join(); // wait for song to finish
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.err.println("Conductor interrupted while waiting to finish");
         }
         
         System.out.println("Test finished");
@@ -275,6 +275,4 @@ public class Conductor implements Runnable {
             cm.stop();
         }
     }
-    
-    
 }
