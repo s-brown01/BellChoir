@@ -15,7 +15,18 @@ public enum Note {
     F4S,
     G4,
     G4S,
-    A5;
+    A5,
+    A5S,
+    B5,
+    B5S,
+    C5,
+    C5S,
+    D5,
+    D5S,
+    E5,
+    E5S,
+    F5,
+    F5S;
     
     public static final int SAMPLE_RATE = 48 * 1024; // ~48KHz
     public static final int MEASURE_LENGTH_SEC = 1;
