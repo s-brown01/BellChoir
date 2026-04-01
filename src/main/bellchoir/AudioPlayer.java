@@ -86,8 +86,13 @@ public class AudioPlayer {
         List<BellNote> newSong = this.readSong(filename);
         // if the readSong(filename) returns null if the file couldn't be processed for
         if (newSong == null) {
-            logger.severe("Reading the song resulted in a null value. Terminating program\n\tFilename was " + filename);
+            logger.severe("Reading the song resulted in a null value. Terminating program (Filename was " + filename +")");
             // exit with 1 to show an invalid exit (0 is all good, 1 is expected but not good)
+            System.exit(1);
+        }
+        
+        if (newSong.isEmpty()) {
+            logger.warning("Reading song resulted in an empty song. Terminating program (Filename was " + filename +")");
             System.exit(1);
         }
         

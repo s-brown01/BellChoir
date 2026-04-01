@@ -27,7 +27,7 @@ public class Conductor implements Runnable {
      * A {@link BellNote} that represents a short buffer to add at the beginning of a song, allowing all Members to get
      * ready
      */
-    private static final BellNote BUFFER_REST = new BellNote(Note.REST, NoteLength.QUARTER);
+    private static final BellNote BUFFER_REST = new BellNote(Note.REST, NoteLength.WHOLE);
     
     /**
      * A basic functionality test for the Conductor
