@@ -18,7 +18,6 @@ public enum Note {
     A5,
     A5S,
     B5,
-    B5S,
     C5,
     C5S,
     D5,
