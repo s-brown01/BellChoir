@@ -23,6 +23,11 @@ public class Conductor implements Runnable {
      * A {@link Logger} created using {@link BellChoirLogger}, configured specifically for the Bell Choir project
      */
     private static final Logger logger = BellChoirLogger.createLogger(Conductor.class.getName());
+    /**
+     * A {@link BellNote} that represents a short buffer to add at the beginning of a song, allowing all Members to get
+     * ready
+     */
+    private static final BellNote BUFFER_REST = new BellNote(Note.REST, NoteLength.QUARTER);
     
     /**
      * A basic functionality test for the Conductor
@@ -102,6 +107,9 @@ public class Conductor implements Runnable {
      */
     public Conductor(List<BellNote> song, AudioFormat af, String ConductorName) {
         this.song = song;
+        // add a short buffer to the beginning of the song (BEFORE MAKING THE CHOIR)
+        // fixes a small error that the first note wouldn't play the full duration
+        this.song.add(0, Conductor.BUFFER_REST);
         this.af = af;
         this.choir = new HashMap<>();
         // if the name is null, fix it
@@ -221,7 +229,6 @@ public class Conductor implements Runnable {
                 // if the member is null, the Choir wasn't created correctly
                 if (cm == null) {
                     logger.severe("An error occurred while trying to play the song: found a null member. Terminating program.");
-//                    System.err.println("An error occurred while trying to play the song, terminating program");
                     System.exit(1);
                 }
                 
@@ -239,7 +246,6 @@ public class Conductor implements Runnable {
             // something happened while getting SourceDataLine from the AudioFormat
             // this is very bad so program should shut down
             logger.severe("An error occurred while trying to play the song: resource was restricted. Terminating program.");
-//            System.err.println("An error occurred while trying to play the song, terminating program");
             System.exit(1);
         }
         
